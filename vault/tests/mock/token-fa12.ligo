@@ -42,94 +42,98 @@ function getAllowance (const ownerAccount : account_t; const spender : address; 
   ];
 
 (* Transfer token to another account *)
-function transfer (const from_ : address; const to_ : address; const value : nat; var s : storage_t) : return_t is
-    block {
-      (* Sending to yourself? *)
-      if from_ = to_ then
-        failwith("InvalidSelfToSelfTransfer")
-      else skip;
+function transfer (
+  const from_ : address;
+  const to_ : address;
+  const value : nat;
+  var s : storage_t
+) : return_t is block {
+    (* Sending to yourself? *)
+    if from_ = to_ then
+      failwith("InvalidSelfToSelfTransfer")
+    else skip;
 
-      (* Retrieve sender account from storage *)
-      var senderAccount : account_t := getAccount(from_, s);
+    (* Retrieve sender account from storage *)
+    var senderAccount : account_t := getAccount(from_, s);
 
-      (* Balance check *)
-      if senderAccount.balance < value then
-        failwith("NotEnoughBalance")
-      else skip;
+    (* Balance check *)
+    if senderAccount.balance < value then
+      failwith("NotEnoughBalance")
+    else skip;
 
-      (* Check this address can spend the tokens *)
-      if from_ =/= Tezos.get_sender() then block {
-        const spenderAllowance : nat = getAllowance(senderAccount, Tezos.get_sender(), s);
+    (* Check this address can spend the tokens *)
+    if from_ =/= Tezos.get_sender() then block {
+      const spenderAllowance : nat = getAllowance(senderAccount, Tezos.get_sender(), s);
 
-        // if spenderAllowance < value then
-        //   failwith("NotEnoughAllowance")
-        // else skip;
+      // if spenderAllowance < value then
+      //   failwith("NotEnoughAllowance")
+      // else skip;
 
-        (* Decrease any allowances *)
-        senderAccount.allowances[Tezos.get_sender()] := abs(spenderAllowance - value);
-      } else skip;
+      (* Decrease any allowances *)
+      senderAccount.allowances[Tezos.get_sender()] := abs(spenderAllowance - value);
+    } else skip;
 
-      (* Update sender balance *)
-      senderAccount.balance := abs(senderAccount.balance - value);
+    (* Update sender balance *)
+    senderAccount.balance := abs(senderAccount.balance - value);
 
-      (* Update storage *)
-      s.ledger[from_] := senderAccount;
+    (* Update storage *)
+    s.ledger[from_] := senderAccount;
 
-      (* Create or get destination account *)
-      var destAccount : account_t := getAccount(to_, s);
+    (* Create or get destination account *)
+    var destAccount : account_t := getAccount(to_, s);
 
-      (* Update destination balance *)
-      destAccount.balance := destAccount.balance + value;
+    (* Update destination balance *)
+    destAccount.balance := destAccount.balance + value;
 
-      (* Update storage *)
-      s.ledger[to_] := destAccount;
+    (* Update storage *)
+    s.ledger[to_] := destAccount;
 
-    } with ((nil: list(operation)), s)
+} with ((nil: list(operation)), s)
 
-  (* Approve an nat to be spent by another address in the name of [ the sender *)
-  function approve (const spender : address; const value : nat; var s : storage_t) : return_t is
-    block {
-      if spender = Tezos.get_sender() then
-        failwith("InvalidSelfToSelfApproval")
-      else skip;
+(* Approve an nat to be spent by another address in the name of [ the sender *)
+function approve (const spender : address; const value : nat; var s : storage_t) : return_t is
+  block {
+    if spender = Tezos.get_sender() then
+      failwith("InvalidSelfToSelfApproval")
+    else skip;
 
-      (* Create or get sender account *)
-      var senderAccount : account_t := getAccount(Tezos.get_sender(), s);
+    (* Create or get sender account *)
+    var senderAccount : account_t := getAccount(Tezos.get_sender(), s);
 
-      (* Get current spender allowance *)
-      const spenderAllowance : nat = getAllowance(senderAccount, spender, s);
+    (* Get current spender allowance *)
+    const spenderAllowance : nat = getAllowance(senderAccount, spender, s);
 
-      (* Prevent a corresponding attack vector *)
-      if spenderAllowance > 0n and value > 0n then
-        failwith("UnsafeAllowanceChange")
-      else skip;
+    (* Prevent a corresponding attack vector *)
+    if spenderAllowance > 0n and value > 0n then
+      failwith("UnsafeAllowanceChange")
+    else skip;
 
-      (* Set spender allowance *)
-      senderAccount.allowances[spender] := value;
+    (* Set spender allowance *)
+    senderAccount.allowances[spender] := value;
 
-      (* Update storage *)
-      s.ledger[Tezos.get_sender()] := senderAccount;
+    (* Update storage *)
+    s.ledger[Tezos.get_sender()] := senderAccount;
 
-    } with ((nil: list(operation)), s)
+  } with ((nil: list(operation)), s)
 
-  (* View function that forwards the balance of [ source to a contract *)
-  function getBalance (const owner : address; const contr : contract(nat); var s : storage_t) : return_t is
-    block {
-      const ownerAccount : account_t = getAccount(owner, s);
-    } with (list [Tezos.transaction(ownerAccount.balance, 0tz, contr)], s)
+(* View function that forwards the balance of [ source to a contract *)
+function getBalance (const owner : address; const contr : contract(nat); var s : storage_t) : return_t is
+  block {
+    const ownerAccount : account_t = getAccount(owner, s);
+  } with (list [Tezos.transaction(ownerAccount.balance, 0tz, contr)], s)
 
-  (* View function that forwards the allowance nat of [ spender in the name of [ tokenOwner to a contract *)
-  function getAllowances (const owner : address; const spender : address; const contr : contract(nat); var s : storage_t) : return_t is
-    block {
-      const ownerAccount : account_t = getAccount(owner, s);
-      const spenderAllowance : nat = getAllowance(ownerAccount, spender, s);
-    } with (list [Tezos.transaction(spenderAllowance, 0tz, contr)], s)
+(* View function that forwards the allowance nat of [ spender in the name of [ tokenOwner to a contract *)
+function getAllowances (const owner : address; const spender : address; const contr : contract(nat); var s : storage_t) : return_t is
+  block {
+    const ownerAccount : account_t = getAccount(owner, s);
+    const spenderAllowance : nat = getAllowance(ownerAccount, spender, s);
+  } with (list [Tezos.transaction(spenderAllowance, 0tz, contr)], s)
 
-  (* View function that forwards the totalSupply to a contract *)
-  function getTotalSupply (const contr : contract(nat); var s : storage_t) : return_t is
-    block {
-      skip
-    } with (list [Tezos.transaction(s.total_supply, 0tz, contr)], s)
+(* View function that forwards the totalSupply to a contract *)
+function getTotalSupply (const contr : contract(nat); var s : storage_t) : return_t is
+  block {
+    skip
+  } with (list [Tezos.transaction(s.total_supply, 0tz, contr)], s)
 
 function main(const action : action_t; var s : storage_t) : return_t is case action of [
       | Transfer(params)        -> transfer(params.0, params.1.0, params.1.1, s)

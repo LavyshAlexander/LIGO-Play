@@ -38,18 +38,30 @@ function deposit_tokens(
     const token_balance = get_or_default_token_balance(token_contract, user_account);
     user_account.tokens[token_contract] := token_balance + token_params.amount;
 
+    // const approve_params: approve_f12_parameters_t = record [
+    //     spender = Tezos.get_self_address();
+    //     value = token_params.amount;
+    // ];
+
+    // const token_contract_approve_entrypoint = Option.unopt(
+    //     (Tezos.get_entrypoint_opt("%approve", token_contract): option(contract(approve_f12_parameters_t)))
+    // );
+
     const transfer_params: transfer_fa12_parameters_t = record [
         _from = Tezos.get_source();
         _to = Tezos.get_self_address();
         value = token_params.amount;
     ];
 
-    const token_contract_entrypoint = Option.unopt(
+    const token_contract_transfer_entrypoint = Option.unopt(
         (Tezos.get_entrypoint_opt("%transfer", token_contract): option(contract(transfer_fa12_parameters_t)))
     );
 
     storage.ledger[Tezos.get_source()] := user_account;
-    const operations = list[Tezos.transaction(transfer_params, 0tez, token_contract_entrypoint)]
+    const operations = list[
+        // Tezos.transaction(approve_params, 0tez, token_contract_approve_entrypoint);
+        Tezos.transaction(transfer_params, 0tez, token_contract_transfer_entrypoint)
+    ]
 } with (operations, storage)
 
 

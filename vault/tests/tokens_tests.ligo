@@ -28,5 +28,5 @@ const test_deposit_tokens = {
 						"Incorrect value of source address balance");
 	assert_with_error(abs(result_contract_balance - initial_contract_balance) = 500_000n,
 						"Incorrect value of contract address balance");
-	assert_with_error(tokens_balance = 500_000n, "Incorrect value of contract big_map");
+	assert_with_error(tokens_balance = 500_000n, "Incorrect value in contract big_map");
 } with (record [status = "OK"; consumed_gas = consumed_gas]);

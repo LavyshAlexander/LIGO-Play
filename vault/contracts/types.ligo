@@ -15,7 +15,7 @@ type storage_t is record [
 
 type return_t is list(operation) * storage_t
 
-type action_t is 
+type action_t is
     | Deposit of (option(token_params_t))
 	| Withdraw of (option(token_params_t))
 
@@ -24,3 +24,8 @@ type transfer_fa12_parameters_t is [@layout:comb] record [
     [@annot:to] _to: address;
     value: nat;
 ];
+
+type approve_f12_parameters_t is [@layout:comb] record [
+    spender: address;
+    value: nat;
+]
