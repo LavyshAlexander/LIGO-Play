@@ -1,0 +1,12 @@
+node_modules/
+deployed/
+build/
+*.pp.ligo
+package-lock.json
+faucet*
+deploy
+.test*
+.vscode/
+.DS_Store
+target/
+.env.local
