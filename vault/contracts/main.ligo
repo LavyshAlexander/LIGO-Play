@@ -28,7 +28,10 @@ function deposit_tez(var storage : storage_t): return_t is {
 } with ((list[]: list(operation)), storage)
 
 
-function deposit_tokens(const token_params: token_params_t; const storage : storage_t): return_t is {
+function deposit_tokens(
+    const token_params: token_params_t;
+    var   storage : storage_t
+): return_t is {
     const token_contract = token_params.token_address;
 
     var user_account := get_or_create_user_account(Tezos.get_source(), storage);
@@ -40,18 +43,29 @@ function deposit_tokens(const token_params: token_params_t; const storage : stor
         _to = Tezos.get_self_address();
         value = token_params.amount;
     ];
+
     const token_contract_entrypoint = Option.unopt(
         (Tezos.get_entrypoint_opt("%transfer", token_contract): option(contract(transfer_fa12_parameters_t)))
     );
+
+    storage.ledger[Tezos.get_source()] := user_account;
     const operations = list[Tezos.transaction(transfer_params, 0tez, token_contract_entrypoint)]
 } with (operations, storage)
 
-function deposit(const token_params : option(token_params_t); const storage : storage_t): return_t is case token_params of [
+
+function deposit(
+    const token_params : option(token_params_t);
+    const storage : storage_t
+): return_t is case token_params of [
     | None    -> deposit_tez(storage)
     | Some(x) -> deposit_tokens(x, storage)
 ]
 
-function main(const action : action_t; const storage : storage_t): return_t is case action of [
+
+function main(
+    const action : action_t;
+    const storage : storage_t
+): return_t is case action of [
     | Deposit(params) -> deposit(params, storage)
     | Withdraw(_params) -> failwith("Not implemented")
 ]

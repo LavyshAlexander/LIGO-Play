@@ -19,8 +19,10 @@ const test_deposit_tokens = {
 
 	const result_contract_balance = TestHelpers.get_token_balance(token_contract_typed_address, contract_address);
 	const result_source_balance = TestHelpers.get_token_balance(token_contract_typed_address, source_address);
+
 	const account = Option.unopt(storage.ledger[source_address]);
 	const tokens_balance = Option.unopt(account.tokens[token_contract_address]);
+
 
 	assert_with_error(abs(initial_source_balance - result_source_balance) = 500_000n,
 						"Incorrect value of source address balance");
