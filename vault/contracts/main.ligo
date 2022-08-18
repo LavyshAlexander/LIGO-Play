@@ -74,6 +74,26 @@ function deposit(
 ]
 
 
+function withdraw(
+    var storage : storage_t;
+): return_t {
+
+    var user_account := get_or_create_user_account(Tezos.get_source(), storage);
+
+    var user_tez := user_account.tez;
+    user_account.tez := 0;
+
+    storage.ledger[Tezos.get_source()] := user_account;
+
+    const operations = list[]; // TODO: Add type of list of transactions
+
+    if user_tez =/= 0 then {
+        skip;
+        // TODO: create operation for transferring back tezos
+    }
+} with (operations, storage)
+
+
 function main(
     const action : action_t;
     const storage : storage_t
