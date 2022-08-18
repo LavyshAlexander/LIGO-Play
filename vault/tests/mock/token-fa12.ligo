@@ -11,7 +11,7 @@ type storage_t is record [
 ]
 
 type transfer_params_t is michelson_pair(address, "from", michelson_pair(address, "to", nat, "value"), "")
-type approve_params_t is address * nat //michelson_pair(address, "spender", nat, "value")
+type approve_params_t is address * nat // michelson_pair(address, "spender", nat, "value")
 type balance_params_t is michelson_pair(address, "owner", contract(nat), "")
 type allowance_params_t is michelson_pair(michelson_pair(address, "owner", address, "spender"), "", contract(nat), "")
 type total_supply_params_t is (unit * contract(nat))
@@ -65,9 +65,9 @@ function transfer (
     if from_ =/= Tezos.get_sender() then block {
       const spenderAllowance : nat = getAllowance(senderAccount, Tezos.get_sender(), s);
 
-      // if spenderAllowance < value then
-      //   failwith("NotEnoughAllowance")
-      // else skip;
+      if spenderAllowance < value then
+        failwith("NotEnoughAllowance")
+      else skip;
 
       (* Decrease any allowances *)
       senderAccount.allowances[Tezos.get_sender()] := abs(spenderAllowance - value);

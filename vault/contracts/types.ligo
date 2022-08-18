@@ -9,6 +9,11 @@ type token_params_t is record [
     amount: nat;
 ]
 
+type withdraw_params_t is record [
+    token_address: option(token_address_t);
+    amount: option(nat);
+]
+
 type storage_t is record [
     ledger: big_map(address, user_account_t);
 ]
@@ -17,7 +22,7 @@ type return_t is list(operation) * storage_t
 
 type action_t is
     | Deposit of (option(token_params_t))
-	| Withdraw of (option(token_params_t))
+	| Withdraw of (option(withdraw_params_t))
 
 type transfer_fa12_parameters_t is [@layout:comb] record [
     [@annot:from] _from: address;

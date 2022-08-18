@@ -38,15 +38,6 @@ function deposit_tokens(
     const token_balance = get_or_default_token_balance(token_contract, user_account);
     user_account.tokens[token_contract] := token_balance + token_params.amount;
 
-    // const approve_params: approve_f12_parameters_t = record [
-    //     spender = Tezos.get_self_address();
-    //     value = token_params.amount;
-    // ];
-
-    // const token_contract_approve_entrypoint = Option.unopt(
-    //     (Tezos.get_entrypoint_opt("%approve", token_contract): option(contract(approve_f12_parameters_t)))
-    // );
-
     const transfer_params: transfer_fa12_parameters_t = record [
         _from = Tezos.get_source();
         _to = Tezos.get_self_address();
@@ -59,7 +50,6 @@ function deposit_tokens(
 
     storage.ledger[Tezos.get_source()] := user_account;
     const operations = list[
-        // Tezos.transaction(approve_params, 0tez, token_contract_approve_entrypoint);
         Tezos.transaction(transfer_params, 0tez, token_contract_transfer_entrypoint)
     ]
 } with (operations, storage)
@@ -75,9 +65,8 @@ function deposit(
 
 
 function withdraw(
-    var storage : storage_t;
-): return_t {
-
+    const storage : storage_t
+): return_t is block {
     var user_account := get_or_create_user_account(Tezos.get_source(), storage);
 
     var user_tez := user_account.tez;
@@ -85,19 +74,19 @@ function withdraw(
 
     storage.ledger[Tezos.get_source()] := user_account;
 
-    const operations = list[]; // TODO: Add type of list of transactions
-
+    var operations : list(operation);
     if user_tez =/= 0 then {
-        skip;
-        // TODO: create operation for transferring back tezos
+        operations : list(operation) := list[
+            Tezos.transaction(unit, user_tez, Tezos.get_source())
+        ];
     }
 } with (operations, storage)
 
 
-function main(
+function main (
     const action : action_t;
     const storage : storage_t
 ): return_t is case action of [
     | Deposit(params) -> deposit(params, storage)
-    | Withdraw(_params) -> failwith("Not implemented")
+    | Withdraw(_params) -> withdraw()
 ]

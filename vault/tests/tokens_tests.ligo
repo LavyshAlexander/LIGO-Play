@@ -3,12 +3,15 @@ const test_deposit_tokens = {
 
 	const source_address = Test.nth_bootstrap_account(0);
     const (contract_address, contract_typed_address, contract) = TestHelpers.deploy_vault_contract();
-	const (token_contract_address, token_contract_typed_address, _token_contract) = TestHelpers.deploy_test_fa12_token(source_address, 1_000_000n);
+	const (token_contract_address, token_contract_typed_address, token_contract) = TestHelpers.deploy_test_fa12_token(source_address, 1_000_000n);
 
 	// const initial_source_balance = Test.get_balance(source_address);
 	// const initial_vault_balance = Test.get_balance(contract_address);
 	const initial_source_balance = TestHelpers.get_token_balance(token_contract_typed_address, source_address);
 	const initial_contract_balance = TestHelpers.get_token_balance(token_contract_typed_address, contract_address);
+
+	const approve_params: TokenFA12.approve_params_t = (contract_address, 500_000n);
+	const _ = Test.transfer_to_contract_exn(token_contract, Approve(approve_params), 0tez);
 
 	const token_params: option(token_params_t) = Some(record [
 		token_address = token_contract_address;
