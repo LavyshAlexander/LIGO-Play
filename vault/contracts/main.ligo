@@ -66,17 +66,17 @@ function deposit(
 function withdraw_tez(var storage : storage_t): return_t is {
     var user_account := get_or_create_user_account(Tezos.get_source(), storage);
 
-    var _user_tez := user_account.tez;
+    var user_tez := user_account.tez;
     user_account.tez := 0tez;
 
     storage.ledger[Tezos.get_source()] := user_account;
 
     var operations : list(operation) := nil;
-    // if user_tez =/= 0tez then {
-    //     operations := list[
-    //         Tezos.transaction(unit, user_tez, Tezos.get_source())
-    //     ];
-    // }
+    if user_tez =/= 0tez then {
+        operations := list[
+            Tezos.transaction(unit, user_tez, (Tezos.get_contract(Tezos.get_source()) : contract(unit)))
+        ];
+    }
 } with (operations, storage)
 
 
