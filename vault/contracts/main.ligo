@@ -63,24 +63,39 @@ function deposit(
     | Some(x) -> deposit_tokens(x, storage)
 ]
 
-
-function withdraw(
-    const storage : storage_t
-): return_t is block {
+function withdraw_tez(var storage : storage_t): return_t is {
     var user_account := get_or_create_user_account(Tezos.get_source(), storage);
 
-    var user_tez := user_account.tez;
-    user_account.tez := 0;
+    var _user_tez := user_account.tez;
+    user_account.tez := 0tez;
 
     storage.ledger[Tezos.get_source()] := user_account;
 
-    var operations : list(operation);
-    if user_tez =/= 0 then {
-        operations : list(operation) := list[
-            Tezos.transaction(unit, user_tez, Tezos.get_source())
-        ];
-    }
+    var operations : list(operation) := nil;
+    // if user_tez =/= 0tez then {
+    //     operations := list[
+    //         Tezos.transaction(unit, user_tez, Tezos.get_source())
+    //     ];
+    // }
 } with (operations, storage)
+
+
+function withdraw_tokens(
+    const _address : option(token_address_t);
+    const _amount  : option(nat);
+    var   s       : storage_t
+): return_t is {
+    failwith("NotImplemented");
+} with ((nil: list(operation)), s)
+
+
+function withdraw(
+    const params: option(withdraw_params_t);
+    const storage : storage_t
+): return_t is case params of [
+    | None    -> withdraw_tez(storage)
+    | Some(p) -> withdraw_tokens(p.token_address, p.amount, storage)
+]
 
 
 function main (
@@ -88,5 +103,5 @@ function main (
     const storage : storage_t
 ): return_t is case action of [
     | Deposit(params) -> deposit(params, storage)
-    | Withdraw(_params) -> withdraw()
+    | Withdraw(params) -> withdraw(params, storage)
 ]
