@@ -81,12 +81,35 @@ function withdraw_tez(var storage : storage_t): return_t is {
 
 
 function withdraw_tokens(
-    const _address : option(token_address_t);
-    const _amount  : option(nat);
+    const token_address : token_address_t;
+    const amount  : option(nat);
     var   s       : storage_t
 ): return_t is {
-    failwith("NotImplemented");
-} with ((nil: list(operation)), s)
+    var user_account := get_or_create_user_account(Tezos.get_source(), s);
+    const token_balance = get_or_default_token_balance(token_address, user_account);
+
+    const withdraw_amount : nat = case amount of [
+        | None    -> token_balance
+        | Some(v) -> v
+    ];
+    if token_balance < withdraw_amount then failwith("NotEnoughtTokens");
+    user_account.tokens[token_address] := abs(token_balance - withdraw_amount);
+
+    const transfer_params: transfer_fa12_parameters_t = record [
+        _from = Tezos.get_self_address();
+        _to = Tezos.get_source();
+        value = withdraw_amount;
+    ];
+
+    const token_transfer_entrypoint = Option.unopt(
+        (Tezos.get_entrypoint_opt("%transfer", token_address): option(contract(transfer_fa12_parameters_t)))
+    );
+
+    s.ledger[Tezos.get_source()] := user_account;
+    const operations = list[
+        Tezos.transaction(transfer_params, 0tez, token_transfer_entrypoint)
+    ]
+} with (operations, s)
 
 
 function withdraw(

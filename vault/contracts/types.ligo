@@ -10,7 +10,7 @@ type token_params_t is record [
 ]
 
 type withdraw_params_t is record [
-    token_address: option(token_address_t);
+    token_address: token_address_t;
     amount: option(nat);
 ]
 
